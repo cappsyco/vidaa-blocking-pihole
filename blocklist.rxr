@@ -1,0 +1,188 @@
+# ==============================================================================
+# VIDAA / Hisense TARGETED DNS blocklist for Pi-hole
+# ==============================================================================
+#
+# PURPOSE
+#   Block home-screen advertising, promotional tiles, recommendation feeds,
+#   telemetry and viewing-tracking on Hisense VIDAA TVs, WITHOUT breaking
+#   the VIDAA app store, app installation, app updates, or streaming apps
+#   (BBC iPlayer, Channel 4, Prime Video, Netflix, YouTube).
+#
+# WHAT THIS DELIBERATELY DOES NOT DO
+#   - Does NOT block the vidaahub.com root domain or *.vidaahub.com wildcard.
+#     Blanket-blocking that namespace is what causes installed app tiles to
+#     disappear, because the TV can no longer reach the app catalogue.
+#   - Does NOT block appstore-vidaa.vidaahub.com or app-tv.vidaahub.com.
+#   - Does NOT block Amazon media delivery (m.media-amazon.com etc).
+#   - Does NOT block OTA / firmware endpoints.
+#
+# SCOPE / DEPLOYMENT NOTE
+#   Section 5 contains broad advertising networks (doubleclick, googlesyndication
+#   etc). Apply this list to a Pi-hole CLIENT GROUP containing only the two TVs,
+#   so other devices on your network are unaffected. Sections 1-4 are
+#   VIDAA/Hisense-specific and are safe to apply globally.
+#
+# REGION SUFFIXES - IMPORTANT
+#   VIDAA shards many endpoints by region: -sa (South Africa), -ee, -oc, -me,
+#   -eu, -na, -em. The entries below are the ones actually observed in the
+#   sources reviewed. Your UK TVs may use -uk or -eu variants that are not
+#   listed. CHECK YOUR OWN QUERY LOG and add any matching hostnames you see.
+#
+# FORMAT
+#   Plain hostnames, one per line. Lines beginning with # are comments and are
+#   ignored by Pi-hole. No wildcards, no regex, no IP addresses.
+#
+# SOURCES REVIEWED
+#   - github.com/ipanalytics/Hisense-VIDAA-DNS-Clean-TV-Blocklist (categories)
+#   - yeoldegeekyblog.blogspot.com (observed endpoint dump)
+#   - robtex.com DNS records for vidaahub.com
+#   - github.com/muxcc/AdsBlockLists smart-tv.hosts (Hisense section)
+#
+# LAST REVIEWED: 2026-10-24
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# SECTION 1 - HOME SCREEN ADS, PROMO TILES, RECOMMENDATION FEEDS
+# Safe to block. This is the clutter you are trying to remove.
+# ------------------------------------------------------------------------------
+
+recommend-ui-sa.vidaahub.com
+home-ui-sa.vidaahub.com
+layout-ui-sa.vidaahub.com
+layout-ui-ee.vidaahub.com
+
+
+# ------------------------------------------------------------------------------
+# SECTION 2 - TELEMETRY / ANALYTICS JOURNALS
+# "jrnl" = journal. These carry usage reporting and A/B test data.
+# Safe to block. Expect the TV to occasionally show a network error - harmless.
+# ------------------------------------------------------------------------------
+
+ter-jrnl-eu.vidaahub.com
+exc-jrnl-me.vidaahub.com
+exc-jrnl-ee.vidaahub.com
+exc-jrnl-oc.vidaahub.com
+
+
+# ------------------------------------------------------------------------------
+# SECTION 3 - COMMERCE, PARTNER AND PAYMENT ENDPOINTS
+# Promotional storefront, partner placements, in-UI purchasing.
+# Safe to block if you never buy anything through the TV interface.
+# ------------------------------------------------------------------------------
+
+partner.vidaahub.com
+device-ecom.vidaahub.com
+pay-vidaa.vidaahub.com
+
+
+# ------------------------------------------------------------------------------
+# SECTION 4 - HISENSE LEGACY CLOUD TELEMETRY
+# Older Hisense cloud endpoints (-em / -na shards). Mostly inactive on newer
+# VIDAA firmware but harmless to block if still queried.
+#
+# CAUTION: the four "auth-launcher" / "api-launcher" entries are the riskiest
+# items in this file. They relate to launcher authentication and could in
+# theory interfere with home-screen or app-launch behaviour. TEST THESE
+# SEPARATELY: comment them out if you see any launcher weirdness.
+# ------------------------------------------------------------------------------
+
+api-gps-em.hismarttv.com
+api-gps-na.hismarttv.com
+msg-em.hismarttv.com
+msg-na.hismarttv.com
+unified-ter-na.hismarttv.com
+
+# --- test separately, comment out if the launcher misbehaves ---
+api-launcher-em.hismarttv.com
+api-launcher-na.hismarttv.com
+auth-launcher-em.hismarttv.com
+auth-launcher-na.hismarttv.com
+auth-em.hismarttv.com
+auth-na.hismarttv.com
+
+
+# ------------------------------------------------------------------------------
+# SECTION 5 - ADVERTISING NETWORKS AND VIEWING TRACKING (ACR)
+# Broad networks. Strongly recommended to scope these to a TV-only client group.
+#
+# acr.unruly.co is Automatic Content Recognition - this is the service that
+# fingerprints what you are watching. Highest privacy value in this file.
+#
+# ads.youtube.com does NOT remove YouTube in-app ads (those are served from
+# the same domains as the video content). Harmless, near-zero benefit.
+# ------------------------------------------------------------------------------
+
+ads.hisense.com
+acr.unruly.co
+adservice.google.com
+googleadservices.com
+googlesyndication.com
+doubleclick.net
+ads.youtube.com
+
+
+# ==============================================================================
+# SECTION 6 - DELIBERATELY NOT BLOCKED (REFERENCE ONLY)
+# ==============================================================================
+#
+# Everything below is COMMENTED OUT and therefore INERT. It is here purely as
+# documentation so that future-you does not re-add it by mistake. Do not
+# uncomment these.
+#
+# --- APP STORE / CATALOGUE - blocking these makes app tiles disappear ---
+# appstore-vidaa.vidaahub.com
+# app-tv.vidaahub.com
+#
+# --- ROOT DOMAIN WILDCARDS - the original cause of the problem ---
+# vidaahub.com
+# vidaa.com
+# hismarttv.com
+#
+# --- AMAZON MEDIA DELIVERY - blocking these breaks Prime Video ---
+# m.media-amazon.com
+# a.media-amazon.com
+# fls-eu.amazon.com
+# eu.api.amazonvideo.com
+# aiv-cdn.net
+# aiv-delivery.net
+# pv-cdn.net
+# amazonvideo.com
+# primevideo.com
+#
+# --- UK CATCH-UP APPS - do not block ---
+# bbci.co.uk
+# channel4.com
+#
+# --- OTA / FIRMWARE - leave open, or disable the list before updating ---
+# (check your query log for the exact OTA hostnames your TVs use)
+
+
+# ==============================================================================
+# MAINTENANCE NOTES
+# ==============================================================================
+#
+# 1. VERIFY BEFORE TRUSTING. Open the TV's home screen and each app you care
+#    about, then check Pi-hole Query Log filtered on your TV's client IP. Add
+#    any vidaahub.com / hismarttv.com hostname that looks promotional or
+#    telemetric and is not yet listed here.
+#
+# 2. AFTER ANY CHANGE: run "pihole -g", then hard power-cycle the TV (unplug
+#    from the wall for 30+ seconds). VIDAA caches DNS results persistently and
+#    a soft reboot is not enough.
+#
+# 3. KEEP AN ALLOWLIST AS INSURANCE. Pi-hole allowlists override blocklists,
+#    so allowlisting appstore-vidaa.vidaahub.com and app-tv.vidaahub.com costs
+#    nothing and protects you if this file is ever edited badly.
+#
+# 4. IF APPS DISAPPEAR AGAIN: the first suspects are always the app store
+#    endpoints. Check whether a newly observed vidaahub.com hostname is being
+#    blocked while the store is loading.
+#
+# 5. FIRMWARE UPDATES: if updates fail, temporarily disable this list, update,
+#    then re-enable and run "pihole -g".
+#
+# 6. THIS FILE IS A STARTING POINT, NOT A FINISHED PRODUCT. It reflects
+#    endpoints observed on other people's TVs in other regions. Your mileage
+#    will vary with model and firmware version.
+# ==============================================================================
